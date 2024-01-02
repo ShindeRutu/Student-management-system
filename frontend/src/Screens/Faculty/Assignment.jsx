@@ -23,7 +23,8 @@ const Assignment = () => {
 	const [section, setSection] = useState();
 	const [semester, setSemester] = useState();
 	const [assignment, setAssignment] = useState();
-	const [selected, setSelected] = useState({
+	const [selected, setSelected] = useState("add");
+	const [data, setData] = useState({
 		semester: "",
 		section: "",
 		title: "",
@@ -57,27 +58,12 @@ const Assignment = () => {
 			});
 	}, []);
 
-	const getAssignmentHandler = () => {
-		axios
-			.get(`${baseApiURL()}/assignment/getAssignment`)
-			.then((response) => {
-				if (response.selected.success) {
-					setAssignment(response.selected.assignment);
-				} else {
-					toast.error(response.data.message);
-				}
-			})
-			.catch((error) => {
-				toast.error(error.message);
-			});
-	};
-
 	useEffect(() => {
 		const uploadFileToStorage = async (file) => {
 			toast.loading("Upload Assignment To Storage");
 			const storageRef = ref(
 				storage,
-				`Assignment/${selected.semester} Semester/${selected.section} Section/${selected.subject}Subject/${selected.title} - ${selected.faculty}`
+				`Assignment/${selected.semester}/${selected.section} /${selected.subject}Subject/${selected.title} - ${selected.faculty}`
 			);
 			const uploadTask = uploadBytesResumable(storageRef, file);
 			uploadTask.on(
@@ -99,7 +85,22 @@ const Assignment = () => {
 			);
 		};
 		file && uploadFileToStorage(file);
-	}, [file, selected]);
+	}, [file]);
+
+	const getAssignmentHandler = () => {
+		axios
+			.get(`${baseApiURL()}/assignment/getAssignment`)
+			.then((response) => {
+				if (response.data.success) {
+					setAssignment(response.data.assignment);
+				} else {
+					toast.error(response.data.message);
+				}
+			})
+			.catch((error) => {
+				toast.error(error.message);
+			});
+	};
 
 	const getSectionData = () => {
 		const headers = {
@@ -143,22 +144,24 @@ const Assignment = () => {
 			"Content-Type": "application/json",
 		};
 		axios
-			.post(`${baseApiURL()}/assignment/addAssignment`, selected, {
+			.post(`${baseApiURL()}/assignment/addAssignment`, data, {
 				headers: headers,
 			})
 			.then((response) => {
 				toast.dismiss();
 				if (response.data.success) {
 					toast.success(response.data.message);
-					setSelected({
+					setData({
 						semester: "",
 						section: "",
+						assignmentNumber: "",
 						subject: "",
 						title: "",
 						link: "",
 						faculty: fullname.split(" ")[0] + " " + fullname.split(" ")[2],
 					});
 					setFile("");
+					getAssignmentHandler();
 				} else {
 					toast.error(response.data.message);
 				}
@@ -197,7 +200,7 @@ const Assignment = () => {
 		<div className='w-full mx-auto mt-10 flex justify-center items-start flex-col mb-10'>
 			<div className='flex justify-between items-center w-full'>
 				<Heading title={`Upload Assignment`} />
-				<div className='w-full flex justify-evenly items-center mt-12'>
+				<div className='w-full flex justify-end items-center '>
 					<button
 						className={`${
 							selected === "add" && "border-b-2 "
@@ -217,39 +220,36 @@ const Assignment = () => {
 				</div>
 			</div>
 			{selected === "add" && (
-				<div className='w-1/2 flex flex-col justify-center items-center'>
-					<div className='w-[80%] mt-2'>
+				<div className='w-full mt-8 flex flex-col justify-center items-center'>
+					<div className='w-[40%] mb-4'>
 						<input
 							type='number'
 							id='assigmentNumber'
 							placeholder='Assignment Number'
 							className='bg-blue-50 py-2 px-4 w-full mt-1'
-							value={selected.assignmentNumber}
+							value={data.assignmentNumber}
 							onChange={(e) =>
-								setSelected({ ...selected, assignmentNumber: e.target.value })
+								setData({ ...data, assignmentNumber: e.target.value })
 							}
 						/>
 					</div>
-					<div className='w-[80%] mt-2'>
+					<div className='w-[40%] mb-4'>
 						<input
 							type='text'
 							id='title'
 							placeholder='Title'
+							name='title'
 							className='bg-blue-50 py-2 px-4 w-full mt-1'
-							value={selected.title}
-							onChange={(e) =>
-								setSelected({ ...selected, title: e.target.value })
-							}
+							value={data.title}
+							onChange={(e) => setData({ ...data, title: e.target.value })}
 						/>
 					</div>
-					<div className='w-[80%] mt-2'>
+					<div className='w-[40%] mb-4'>
 						<select
-							value={selected.subject}
+							value={data.subject}
 							name='subject'
 							id='subject'
-							onChange={(e) =>
-								setSelected({ ...selected, subject: e.target.value })
-							}
+							onChange={(e) => setData({ ...data, subject: e.target.value })}
 							className='px-2 bg-blue-50 py-3 rounded-sm text-base accent-blue-700 mt-1 w-full'
 						>
 							<option
@@ -271,10 +271,8 @@ const Assignment = () => {
 								})}
 						</select>
 						<select
-							onChange={(e) =>
-								setSelected({ ...selected, semester: e.target.value })
-							}
-							value={selected.semester}
+							onChange={(e) => setData({ ...data, semester: e.target.value })}
+							value={data.semester}
 							name='semester'
 							id='semester'
 							className='px-2 bg-blue-50 py-3 rounded-sm text-base w-[80%] accent-blue-700 mt-4'
@@ -284,10 +282,8 @@ const Assignment = () => {
 							<option value='12'>12th</option>
 						</select>
 						<select
-							onChange={(e) =>
-								setSelected({ ...selected, section: e.target.value })
-							}
-							value={selected.section}
+							onChange={(e) => setData({ ...data, section: e.target.value })}
+							value={data.section}
 							name='section'
 							id='section'
 							className='px-2 bg-blue-50 py-3 rounded-sm text-base w-[80%] accent-blue-700 mt-4'
@@ -306,7 +302,7 @@ const Assignment = () => {
 								})}
 						</select>
 					</div>
-					{!selected.link && (
+					{!data.link && (
 						<label
 							htmlFor='upload'
 							className='px-2 bg-blue-50 py-3 rounded-sm text-base w-[80%] mt-4 flex justify-center items-center cursor-pointer'
@@ -317,10 +313,10 @@ const Assignment = () => {
 							</span>
 						</label>
 					)}
-					{selected.link && (
+					{data.link && (
 						<p
 							className='px-2 border-2 border-blue-500 py-2 rounded text-base w-[80%] mt-4 flex justify-center items-center cursor-pointer'
-							onClick={() => setSelected({ ...selected, link: "" })}
+							onClick={() => setData({ ...data, link: "" })}
 						>
 							Remove Selected Assignmnet
 							<span className='ml-2'>

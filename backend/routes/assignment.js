@@ -20,13 +20,15 @@ router.post("/getAssignment", async (req, res) => {
 });
 
 router.post("/addAssignment", async (req, res) => {
-	let { faculty, link, section, semester, subject, title } = req.body;
+	let { faculty, link, assignmentNumber, section, semester, subject, title } =
+		req.body;
 	try {
 		await Assignment.create({
 			faculty,
 			link,
 			section,
 			semester,
+			assignmentNumber,
 			subject,
 			title,
 		});
@@ -42,13 +44,15 @@ router.post("/addAssignment", async (req, res) => {
 });
 
 router.post("/updateAssignment/:id", async (req, res) => {
-	let { faculty, link, subject, section, semester, title } = req.body;
+	let { faculty, link, subject, assignmentNumber, section, semester, title } =
+		req.body;
 	try {
 		let assignment = await Assignment.findByIdAndUpdate(req.params.id, {
 			faculty,
 			section,
 			semester,
 			link,
+			assignmentNumber,
 			subject,
 			title,
 		});
