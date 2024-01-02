@@ -35,6 +35,24 @@ const Assignment = () => {
 	});
 
 	useEffect(() => {
+		toast.loading("Loading Subjects");
+		axios
+			.get(`${baseApiURL()}/subject/getSubject`)
+			.then((response) => {
+				toast.dismiss();
+				if (response.data.success) {
+					setSubject(response.data.subject);
+				} else {
+					toast.error(response.data.message);
+				}
+			})
+			.catch((error) => {
+				toast.dismiss();
+				toast.error(error.message);
+			});
+	}, []);
+
+	useEffect(() => {
 		getSectionData();
 		getSemesterData();
 		getAssignmentHandler();
